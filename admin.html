@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Rolling | Tournament Admin & Control Center</title>
+    <title>Railway Rolling | Full Admin Controller</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -77,7 +77,7 @@
             color: var(--secondary);
         }
 
-        input[type="text"], select {
+        input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 0.6rem;
             border: 1px solid var(--border-color);
@@ -92,7 +92,13 @@
             gap: 1rem;
         }
 
-        .btn-save {
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .btn-action {
             background: var(--accent);
             color: #0f172a;
             font-family: 'Montserrat', sans-serif;
@@ -106,8 +112,28 @@
             margin-top: 0.5rem;
         }
 
-        .btn-save:hover {
-            opacity: 0.9;
+        .btn-action:hover { opacity: 0.9; }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .team-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
         }
 
         .status-msg {
@@ -120,122 +146,255 @@
         }
 
         @media (max-width: 600px) {
-            .grid-2 { grid-template-columns: 1fr; }
+            .grid-2, .grid-4 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🎛️ Tournament Admin Controller</h1>
-        <p>Manage Portal Lineups, Bracket Results & Schedule Assignments</p>
+        <h1>🎛️ Master Admin Controller</h1>
+        <p>Manage Teams, Live Game Scores & Tournament Settings</p>
     </header>
 
     <div class="container">
 
-        <!-- TEAM LINEUP MANAGEMENT -->
+        <!-- LIVE SCORE CONTROL PANEL -->
         <div class="card">
-            <h2>🛡️ Manage Team Lineups</h2>
+            <h2>🕹️ Live Game Score Controller</h2>
+            <div class="form-group">
+                <label>Select Mat to Update</label>
+                <select id="score-mat-select" onchange="loadSelectedMatData()">
+                    <option value="1">Mat 1 (Main Court)</option>
+                    <option value="2">Mat 2</option>
+                    <option value="3">Mat 3</option>
+                    <option value="4">Mat 4</option>
+                </select>
+            </div>
+            
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Team 1 Name (Red)</label>
-                    <input type="text" id="t1-name" value="Rail Strikers">
+                    <label>Player / Team A Name</label>
+                    <input type="text" id="admin-p1-name" value="Player A">
                 </div>
                 <div class="form-group">
-                    <label>Team 1 Players (comma separated)</label>
-                    <input type="text" id="t1-players" value="Player A (Captain), J. Miller, C. Vance">
-                </div>
-
-                <div class="form-group">
-                    <label>Team 2 Name (Blue)</label>
-                    <input type="text" id="t2-name" value="Stone Launchers">
+                    <label>Player / Team B Name</label>
+                    <input type="text" id="admin-p2-name" value="Player B">
                 </div>
                 <div class="form-group">
-                    <label>Team 2 Players (comma separated)</label>
-                    <input type="text" id="t2-players" value="Player B (Captain), R. Chen, A. Davis">
+                    <label>Player A Score</label>
+                    <input type="number" id="admin-p1-score" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Player B Score</label>
+                    <input type="number" id="admin-p2-score" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Quarter / Stage</label>
+                    <input type="text" id="admin-qtr" value="Quarter 1">
+                </div>
+                <div class="form-group">
+                    <label>Timer Display (MM:SS)</label>
+                    <input type="text" id="admin-timer" value="02:00">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Match Status</label>
+                    <select id="admin-status">
+                        <option value="LIVE">LIVE</option>
+                        <option value="PAUSED">PAUSED</option>
+                        <option value="FINAL">FINAL</option>
+                    </select>
                 </div>
             </div>
-            <button class="btn-save" onclick="saveLineups()">Broadcast Lineup Updates</button>
-            <div class="status-msg" id="msg-lineups">✓ Team rosters broadcasted!</div>
+            <button class="btn-action" onclick="broadcastLiveScore()">Broadcast Live Game Update</button>
+            <div class="status-msg" id="msg-score">✓ Game score updated and broadcasted!</div>
+        </div>
+
+        <!-- TEAM MANAGEMENT (ADD / REMOVE TEAMS) -->
+        <div class="card">
+            <h2>🛡️ Manage Teams & Lineups</h2>
+            
+            <!-- Add New Team Form -->
+            <div style="background: #fafafa; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.5rem; font-family: 'Montserrat';">Add New Team</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Team Name</label>
+                        <input type="text" id="new-team-name" placeholder="e.g. Rail Strikers">
+                    </div>
+                    <div class="form-group">
+                        <label>Badge Color</label>
+                        <select id="new-team-color">
+                            <option value="bg-red">Red</option>
+                            <option value="bg-blue">Blue</option>
+                            <option value="bg-green">Green</option>
+                            <option value="bg-yellow">Yellow</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Roster Players (comma separated)</label>
+                        <input type="text" id="new-team-roster" placeholder="Player A (Captain), J. Miller, C. Vance">
+                    </div>
+                </div>
+                <button class="btn-action" style="background: var(--primary); color: white;" onclick="addTeam()">+ Add Team to Portal</button>
+            </div>
+
+            <!-- Existing Teams List -->
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; font-family: 'Montserrat';">Current Tournament Teams</h3>
+            <div id="teams-list-container">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="status-msg" id="msg-teams">✓ Teams list updated!</div>
         </div>
 
         <!-- BRACKET CONTROLLER -->
         <div class="card">
-            <h2>🏆 Update Bracket Results</h2>
+            <h2>🏆 Championship Bracket Settings</h2>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Semi-Final 1 Winner</label>
-                    <select id="sf1-winner">
-                        <option value="Rail Strikers">Rail Strikers</option>
-                        <option value="Iron Trackers">Iron Trackers</option>
-                    </select>
+                    <label>Finals Matchup - Team 1</label>
+                    <input type="text" id="bracket-f1" value="Rail Strikers">
                 </div>
                 <div class="form-group">
-                    <label>Semi-Final 2 Winner</label>
-                    <select id="sf2-winner">
-                        <option value="Stone Launchers">Stone Launchers</option>
-                        <option value="Velocity Rollers">Velocity Rollers</option>
-                    </select>
+                    <label>Finals Matchup - Team 2</label>
+                    <input type="text" id="bracket-f2" value="Stone Launchers">
                 </div>
             </div>
-            <button class="btn-save" onclick="saveBracket()">Update Championship Bracket</button>
-            <div class="status-msg" id="msg-bracket">✓ Bracket updated on portal!</div>
-        </div>
-
-        <!-- SCHEDULE CONTROLLER -->
-        <div class="card">
-            <h2>📅 Schedule Assignment</h2>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Finals Time</label>
-                    <input type="text" id="finals-time" value="2:30 PM">
-                </div>
-                <div class="form-group">
-                    <label>Finals Court</label>
-                    <input type="text" id="finals-court" value="Mat 1">
-                </div>
-            </div>
-            <button class="btn-save" onclick="saveSchedule()">Update Match Schedule</button>
-            <div class="status-msg" id="msg-sched">✓ Schedule published!</div>
+            <button class="btn-action" onclick="saveBracket()">Update Bracket Display</button>
+            <div class="status-msg" id="msg-bracket">✓ Bracket updated!</div>
         </div>
 
     </div>
 
     <script>
+        // Default initial teams
+        let teams = [
+            { id: 1, name: "Rail Strikers", color: "bg-red", seed: "Seed #1", roster: ["Player A (Captain)", "J. Miller", "C. Vance"] },
+            { id: 2, name: "Stone Launchers", color: "bg-blue", seed: "Seed #2", roster: ["Player B (Captain)", "R. Chen", "A. Davis"] },
+            { id: 3, name: "Iron Trackers", color: "bg-green", seed: "Seed #3", roster: ["T. Oakley", "K. Kowalski", "M. Garcia"] }
+        ];
+
         function showNotification(id) {
             const el = document.getElementById(id);
             el.style.display = 'block';
             setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
 
-        function saveLineups() {
-            const data = {
-                t1Name: document.getElementById('t1-name').value,
-                t1Players: document.getElementById('t1-players').value.split(','),
-                t2Name: document.getElementById('t2-name').value,
-                t2Players: document.getElementById('t2-players').value.split(',')
-            };
-            localStorage.setItem('railway_portal_lineups', JSON.stringify(data));
-            showNotification('msg-lineups');
+        // LOAD & RENDER TEAMS
+        function renderTeams() {
+            const container = document.getElementById('teams-list-container');
+            container.innerHTML = '';
+            
+            teams.forEach((t, index) => {
+                const item = document.createElement('div');
+                item.className = 'team-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${t.name}</strong> (${t.roster.length} Players)
+                        <div style="font-size: 0.8rem; color: #64748b;">${t.roster.join(', ')}</div>
+                    </div>
+                    <button class="btn-danger" onclick="removeTeam(${index})">Remove</button>
+                `;
+                container.appendChild(item);
+            });
+
+            // Save to localStorage
+            localStorage.setItem('railway_portal_teams', JSON.stringify(teams));
         }
 
+        function addTeam() {
+            const name = document.getElementById('new-team-name').value.trim();
+            const color = document.getElementById('new-team-color').value;
+            const rosterRaw = document.getElementById('new-team-roster').value.trim();
+
+            if (!name) { alert("Please enter a team name."); return; }
+
+            const roster = rosterRaw ? rosterRaw.split(',').map(s => s.trim()) : ["Player 1"];
+
+            teams.push({
+                id: Date.now(),
+                name: name,
+                color: color,
+                seed: `Seed #${teams.length + 1}`,
+                roster: roster
+            });
+
+            document.getElementById('new-team-name').value = '';
+            document.getElementById('new-team-roster').value = '';
+
+            renderTeams();
+            showNotification('msg-teams');
+        }
+
+        function removeTeam(index) {
+            if (confirm(`Remove ${teams[index].name} from the tournament?`)) {
+                teams.splice(index, 1);
+                renderTeams();
+                showNotification('msg-teams');
+            }
+        }
+
+        // GAME SCORE CONTROLLER LOGIC
+        function broadcastLiveScore() {
+            const matId = document.getElementById('score-mat-select').value;
+            
+            // Format time string to total seconds for timer displays
+            const timeParts = document.getElementById('admin-timer').value.split(':');
+            let totalSeconds = 120;
+            if (timeParts.length === 2) {
+                totalSeconds = (parseInt(timeParts[0]) * 60) + parseInt(timeParts[1]);
+            }
+
+            const gameData = {
+                playerA: document.getElementById('admin-p1-name').value,
+                playerB: document.getElementById('admin-p2-name').value,
+                scoreA: parseInt(document.getElementById('admin-p1-score').value) || 0,
+                scoreB: parseInt(document.getElementById('admin-p2-score').value) || 0,
+                quarter: document.getElementById('admin-qtr').value,
+                timeLeft: totalSeconds,
+                status: document.getElementById('admin-status').value
+            };
+
+            // Broadcast to key used by portal.html and dashboard.html
+            localStorage.setItem(`railway_mat${matId}_data`, JSON.stringify(gameData));
+            showNotification('msg-score');
+        }
+
+        function loadSelectedMatData() {
+            const matId = document.getElementById('score-mat-select').value;
+            const raw = localStorage.getItem(`railway_mat${matId}_data`);
+            if (raw) {
+                const data = JSON.parse(raw);
+                document.getElementById('admin-p1-name').value = data.playerA || "Player A";
+                document.getElementById('admin-p2-name').value = data.playerB || "Player B";
+                document.getElementById('admin-p1-score').value = data.scoreA || 0;
+                document.getElementById('admin-p2-score').value = data.scoreB || 0;
+                document.getElementById('admin-qtr').value = data.quarter || "Quarter 1";
+                document.getElementById('admin-status').value = data.status || "LIVE";
+
+                let mins = Math.floor((data.timeLeft || 120) / 60);
+                let secs = (data.timeLeft || 120) % 60;
+                document.getElementById('admin-timer').value = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // BRACKET CONTROLLER
         function saveBracket() {
             const data = {
-                sf1: document.getElementById('sf1-winner').value,
-                sf2: document.getElementById('sf2-winner').value
+                sf1: document.getElementById('bracket-f1').value,
+                sf2: document.getElementById('bracket-f2').value
             };
             localStorage.setItem('railway_portal_bracket', JSON.stringify(data));
             showNotification('msg-bracket');
         }
 
-        function saveSchedule() {
-            const data = {
-                time: document.getElementById('finals-time').value,
-                court: document.getElementById('finals-court').value
-            };
-            localStorage.setItem('railway_portal_sched', JSON.stringify(data));
-            showNotification('msg-sched');
+        // Initialize saved state on page load
+        const savedTeams = localStorage.getItem('railway_portal_teams');
+        if (savedTeams) {
+            try { teams = JSON.parse(savedTeams); } catch(e){}
         }
+        renderTeams();
+        loadSelectedMatData();
     </script>
 </body>
 </html>
