@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Rolling | Tournament Admin & Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #f59e0b;
+            --accent-green: #10b981;
+            --danger: #ef4444;
+            --bg-light: #f1f5f9;
+            --text-dark: #0f172a;
+            --border-color: #cbd5e1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.5;
+            padding-bottom: 3rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 3px solid var(--accent);
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+            color: var(--secondary);
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn-save {
+            background: var(--accent);
+            color: #0f172a;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .status-msg {
+            margin-top: 0.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-align: center;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎛️ Tournament Admin Controller</h1>
+        <p>Manage Portal Lineups, Bracket Results & Schedule Assignments</p>
+    </header>
+
+    <div class="container">
+
+        <!-- TEAM LINEUP MANAGEMENT -->
+        <div class="card">
+            <h2>🛡️ Manage Team Lineups</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Team 1 Name (Red)</label>
+                    <input type="text" id="t1-name" value="Rail Strikers">
+                </div>
+                <div class="form-group">
+                    <label>Team 1 Players (comma separated)</label>
+                    <input type="text" id="t1-players" value="Player A (Captain), J. Miller, C. Vance">
+                </div>
+
+                <div class="form-group">
+                    <label>Team 2 Name (Blue)</label>
+                    <input type="text" id="t2-name" value="Stone Launchers">
+                </div>
+                <div class="form-group">
+                    <label>Team 2 Players (comma separated)</label>
+                    <input type="text" id="t2-players" value="Player B (Captain), R. Chen, A. Davis">
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveLineups()">Broadcast Lineup Updates</button>
+            <div class="status-msg" id="msg-lineups">✓ Team rosters broadcasted!</div>
+        </div>
+
+        <!-- BRACKET CONTROLLER -->
+        <div class="card">
+            <h2>🏆 Update Bracket Results</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Semi-Final 1 Winner</label>
+                    <select id="sf1-winner">
+                        <option value="Rail Strikers">Rail Strikers</option>
+                        <option value="Iron Trackers">Iron Trackers</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Semi-Final 2 Winner</label>
+                    <select id="sf2-winner">
+                        <option value="Stone Launchers">Stone Launchers</option>
+                        <option value="Velocity Rollers">Velocity Rollers</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveBracket()">Update Championship Bracket</button>
+            <div class="status-msg" id="msg-bracket">✓ Bracket updated on portal!</div>
+        </div>
+
+        <!-- SCHEDULE CONTROLLER -->
+        <div class="card">
+            <h2>📅 Schedule Assignment</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Finals Time</label>
+                    <input type="text" id="finals-time" value="2:30 PM">
+                </div>
+                <div class="form-group">
+                    <label>Finals Court</label>
+                    <input type="text" id="finals-court" value="Mat 1">
+                </div>
+            </div>
+            <button class="btn-save" onclick="saveSchedule()">Update Match Schedule</button>
+            <div class="status-msg" id="msg-sched">✓ Schedule published!</div>
+        </div>
+
+    </div>
+
+    <script>
+        function showNotification(id) {
+            const el = document.getElementById(id);
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+
+        function saveLineups() {
+            const data = {
+                t1Name: document.getElementById('t1-name').value,
+                t1Players: document.getElementById('t1-players').value.split(','),
+                t2Name: document.getElementById('t2-name').value,
+                t2Players: document.getElementById('t2-players').value.split(',')
+            };
+            localStorage.setItem('railway_portal_lineups', JSON.stringify(data));
+            showNotification('msg-lineups');
+        }
+
+        function saveBracket() {
+            const data = {
+                sf1: document.getElementById('sf1-winner').value,
+                sf2: document.getElementById('sf2-winner').value
+            };
+            localStorage.setItem('railway_portal_bracket', JSON.stringify(data));
+            showNotification('msg-bracket');
+        }
+
+        function saveSchedule() {
+            const data = {
+                time: document.getElementById('finals-time').value,
+                court: document.getElementById('finals-court').value
+            };
+            localStorage.setItem('railway_portal_sched', JSON.stringify(data));
+            showNotification('msg-sched');
+        }
+    </script>
+</body>
+</html>
